@@ -11,6 +11,7 @@ public class GetEventService extends IGetEventService.Stub implements Runnable {
     private boolean isServiceRunning = true;
     private int port;
     private int errCount;
+    private EventParser parser = new EventParser(); // 实例化解析器
 
     @Override
     public void destroy() {
