@@ -7,6 +7,11 @@ public class EventParser {
     // 暂存当前的坐标状态
     private int curX = 0, curY = 0;
     private int endx = 0 , endy = 0;
+    //TODO 实际位置偏差大，需要修bug
+    private final float maxx = 143999;
+    private final float maxy = 319999;
+    private final int resolusionx = 1440;
+    private final int resolusiony = 3200;
     private boolean isTouching = false;
     long starttime;
     long endtime;
@@ -19,17 +24,17 @@ public class EventParser {
         // 这里需要你根据你的 getevent 输出格式调整解析逻辑
         if (line.contains("0003 0035")) { // 假设这是 X 坐标代号
             if (curX == 0){
-                curX = parseHex(line);
+                curX = (int) ((parseHex(line)/maxx)*resolusionx) ;
                 type = 1;
             }else{
-                endx = parseHex(line);
+                endx = (int) ((parseHex(line)/maxx)*resolusionx) ;
                 type = 2;
             }
         } else if (line.contains("0003 0036")) { // 假设这是 Y 坐标代号
             if (curY == 0){
-                curY = parseHex(line);
+                curY = (int) ((parseHex(line)/maxy)*resolusiony) ;
             }else{
-                endy = parseHex(line);
+                endy = (int) ((parseHex(line)/maxy)*resolusiony) ;
             }
         } else if (line.contains("0001 014a 00000001")) { // 按下事件
             isTouching = true;

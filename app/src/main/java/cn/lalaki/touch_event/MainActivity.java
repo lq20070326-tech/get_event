@@ -36,6 +36,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     private Shizuku.UserServiceArgs mUserServiceArgs;
     private final int port = 34567;
     EventParser parser = new EventParser();
+    private static int i = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +110,6 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {
-            int i = 0;
             ArrayList<ActionModel> actionmodels= new ArrayList<>();
             while (isRunning) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(server.accept().getInputStream()));
@@ -120,7 +120,24 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                     ActionModel action = parser.handleCh(line);
                     if (action != null && State.recordstate) {
                         actionmodels.add(action);
-                        Log.d("actionmodel", "x:"+action.startX+" y:"+action.startY+"type:"+action.type);
+                        Log.d("produceposition", "x:"+action.startX+" y:"+action.startY+"type:"+action.type);
+                        if(i == 0) {
+                            actionmodels.set(0 ,new ActionModel(actionmodels.get(0), 0));
+                            ActionQueue.getInstance().queue.offer(actionmodels.get(0));
+                        }
+                        if(i < actionmodels.size()-1){
+                            int delay =(int) (actionmodels.get(i+1).recordtime-actionmodels.get(i).recordtime);
+                            actionmodels.set(i+1,new ActionModel(actionmodels.get(i+1), delay));
+                            ActionQueue.getInstance().queue.offer(actionmodels.get(i+1));
+                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type);
+                            i++;
+                        }
+                        if(State.clearstate){
+                            actionmodels.clear();
+                            ActionQueue.getInstance().queue.clear();
+                            State.recoverstate = false; State.recordstate = false; State.clearstate = false;
+                            i = 0;
+                        }
                     }
                     sb.append(line).append('\n');
                     while (isRunning && sb.length() > 4096) {
@@ -131,15 +148,6 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                         sc.fullScroll(View.FOCUS_DOWN);
                     });
                     Log.d(getPackageName(), line);
-                }
-                if(i < actionmodels.size()){
-                    int delay =(int) (actionmodels.get(i+1).recordtime+actionmodels.get(i).duration-actionmodels.get(i).recordtime);
-                    actionmodels.add(i+1,new ActionModel(actionmodels.get(i+1), delay));
-                    ActionQueue.getInstance().queue.offer(actionmodels.get(i));
-                    i++;
-                }
-                if(State.clearstate){
-                    actionmodels.clear();
                 }
             }
         } catch (IOException ignored) {
