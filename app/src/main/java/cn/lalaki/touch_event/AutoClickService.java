@@ -24,7 +24,7 @@ public class AutoClickService extends AccessibilityService {
     /**
      * 核心静态方法：对外开放的“开火接口”，传入 X 和 Y 坐标就能点一下屏幕
      */
-    public static void click(int x, int y, int delay) {
+    public static void click(int x, int y, int delay, int duration) {
         // 如果服务没开启，mInstance 为空，直接拦截，防止空指针崩溃
         if (mInstance == null) return;
 
@@ -39,7 +39,7 @@ public class AutoClickService extends AccessibilityService {
         // path: 点击的轨迹
         // 0: 收到指令后延迟 0 毫秒立刻执行
         // 50: 手指在屏幕上按压持续 50 毫秒（模拟正常人类戳屏幕的动作）
-        builder.addStroke(new GestureDescription.StrokeDescription(path, delay, 50));
+        builder.addStroke(new GestureDescription.StrokeDescription(path, delay, duration));
         GestureDescription gesture = builder.build();
 
         // 3. 让无障碍大管家把这个手势甩给屏幕，强行触发物理点击

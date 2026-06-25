@@ -14,7 +14,6 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -110,16 +109,17 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {
+            int i = 0;
+            ArrayList<ActionModel> actionmodels= new ArrayList<>();
             while (isRunning) {
                 BufferedReader br = new BufferedReader(new InputStreamReader(server.accept().getInputStream()));
                 StringBuilder sb = new StringBuilder();
-                ArrayList<ActionModel> actionmodels= new ArrayList<>();
                 while (isRunning) {
                     String line = br.readLine();
                     //处理xy信息
                     ActionModel action = parser.handleCh(line);
-                    if (action != null) {
-                        //TODO 把action加入到actionmodels中
+                    if (State.recordstate) {
+                        actionmodels.add(action);
                     }
                     sb.append(line).append('\n');
                     while (isRunning && sb.length() > 4096) {
@@ -131,7 +131,15 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                     });
                     Log.d(getPackageName(), line);
                 }
-                //TODO 计算delay构建带有delay属性的actionmodel丢到消息队列里面
+                if(i < actionmodels.size()){
+                    int delay =(int) (actionmodels.get(i+1).recordtime+actionmodels.get(i).duration-actionmodels.get(i).recordtime);
+                    actionmodels.add(i+1,new ActionModel(actionmodels.get(i+1), delay));
+                    ActionQueue.getInstance().queue.offer(actionmodels.get(i));
+                    i++;
+                }
+                if(State.clearstate){
+                    actionmodels.clear();
+                }
             }
         } catch (IOException ignored) {
         }
