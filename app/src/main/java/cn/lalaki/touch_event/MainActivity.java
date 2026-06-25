@@ -106,7 +106,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
         Shizuku.bindUserService(mUserServiceArgs, this);
     }
 
-    // 进程间通信，如果不理解此处为什么要用到socket，请百度
+    // 进程间通信
     @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {

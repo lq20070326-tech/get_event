@@ -10,9 +10,13 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import java.util.ArrayList;
+
 public class FloatingWindowManager {
     private static WindowManager mWindowManager;
     private static View mFloatView;
+    private static ArrayList<ActionModel> actionModels= new ArrayList<>();
+    private static int index = 0;
 
     public static void showFloatWindow(Context context){
         if (mFloatView != null) return;
@@ -71,6 +75,7 @@ public class FloatingWindowManager {
         btnstop.setTextSize(12);
         btnstop.setOnClickListener(view -> {
             btnstop.setText("已停止");
+            index = 0;
             State.recordstate = false;
             State.recoverstate = false;
             btnRecord.setText("开始录制");
@@ -80,6 +85,9 @@ public class FloatingWindowManager {
         btnexec.setText("执行");
         btnexec.setTextSize(12);
         btnexec.setOnClickListener(view -> {
+            for (int i = 0; i < ActionQueue.getInstance().queue.size(); i++) {
+                actionModels.add(ActionQueue.getInstance().queue.poll());
+            }
             State.recoverstate = true;
             btnstate.setText("状态栏：执行中");
             new Thread(() -> {
@@ -88,7 +96,7 @@ public class FloatingWindowManager {
                         try {
                             // 消费者：如果没有动作，它会在这里自动阻塞等待，不占 CPU
                             Log.d("try","try已启动");
-                            ActionModel action = ActionQueue.getInstance().queue.poll();
+                            ActionModel action = actionModels.get(index);
                             if (action.type == 1) {
                                 AutoClickService.click(action.startX, action.startY, action.delay, action.duration);
                                 Log.d("clickposition", "x:" + action.startX + "y:" + action.startY + "type:" + action.type);
@@ -96,6 +104,8 @@ public class FloatingWindowManager {
                                 AutoClickService.swipe(action.startX, action.startY, action.endX, action.endY, action.delay, action.duration);
                                 Log.d("swipeposition", "x:" + action.endX + "y:" + action.endY + "type:" + action.type);
                             }
+                            if(index == actionModels.size()) index = 0;
+                            index++;
                         } catch(NullPointerException e){
                             State.recoverstate = false;
                         }
@@ -108,6 +118,7 @@ public class FloatingWindowManager {
         btnclear.setTextSize(12);
         btnclear.setOnClickListener(view -> {
             State.clearstate = true;
+            actionModels.clear();
             btnstate.setText("状态栏：已清除");
         });
         //5.关闭按钮
