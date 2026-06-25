@@ -17,7 +17,6 @@ public class EventParser {
         // 伪代码：解析 getevent 的 16 进制字符串
         // 格式通常是: [设备名]: [TYPE] [CODE] [VALUE]
         // 这里需要你根据你的 getevent 输出格式调整解析逻辑
-        //TODO 加入滑动的动作处理
         if (line.contains("0003 0035")) { // 假设这是 X 坐标代号
             if (curX == 0){
                 curX = parseHex(line);
