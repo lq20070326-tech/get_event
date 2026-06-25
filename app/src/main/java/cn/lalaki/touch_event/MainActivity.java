@@ -118,8 +118,9 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                     String line = br.readLine();
                     //处理xy信息
                     ActionModel action = parser.handleCh(line);
-                    if (State.recordstate) {
+                    if (action != null && State.recordstate) {
                         actionmodels.add(action);
+                        Log.d("actionmodel", "x:"+action.startX+" y:"+action.startY+"type:"+action.type);
                     }
                     sb.append(line).append('\n');
                     while (isRunning && sb.length() > 4096) {

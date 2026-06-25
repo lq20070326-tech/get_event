@@ -30,8 +30,8 @@ public class FloatingWindowManager {
         params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         params.format = PixelFormat.TRANSLUCENT;
         params.gravity = Gravity.TOP | Gravity.START;
-        params.x = 100;
-        params.y = 300;
+        params.x = 90;
+        params.y = 350;
 
         final LinearLayout layout = new LinearLayout(context);
         mFloatView = layout;

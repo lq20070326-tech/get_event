@@ -6,7 +6,7 @@ import java.util.List;
 public class EventParser {
     // 暂存当前的坐标状态
     private int curX = 0, curY = 0;
-    private int endx = curX , endy = curY;
+    private int endx = 0 , endy = 0;
     private boolean isTouching = false;
     long starttime;
     long endtime;
@@ -41,9 +41,13 @@ public class EventParser {
                 isTouching = false;
                 // 触发了一个点击动作！
                 if(type == 1) {
-                    return new ActionModel(curX, curY, 0, (int) (endtime - starttime), starttime);
+                    ActionModel actionModel = new ActionModel(curX, curY, 0, (int) (endtime - starttime), starttime);
+                    curX = 0 ; curY = 0;
+                    return actionModel;
                 }else{
-                    return new ActionModel(curX, curY, endx, endy, 0, (int) (endtime - starttime), starttime);
+                    ActionModel actionModel = new ActionModel(curX, curY, endx, endy, 0, (int) (endtime - starttime), starttime);
+                    curX = 0; curY = 0; endx = 0; endy = 0;
+                    return actionModel;
                 }
             }
         }
