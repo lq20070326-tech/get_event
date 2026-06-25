@@ -41,15 +41,17 @@ public class EventParser {
             starttime = System.currentTimeMillis();
         } else if (line.contains("0001 014a 00000000")) { // 松开事件
             endtime = System.currentTimeMillis();
+            int duration = (int) (endtime - starttime);
+            if (duration < 50 || duration > 300) duration = 75;
             if (isTouching) {
                 isTouching = false;
                 // 触发了一个点击动作！
                 if(type == 1) {
-                    ActionModel actionModel = new ActionModel(curX, curY, 0, (int) (endtime - starttime), starttime);
+                    ActionModel actionModel = new ActionModel(curX, curY, 0, duration, starttime);
                     curX = 0 ; curY = 0;
                     return actionModel;
                 }else{
-                    ActionModel actionModel = new ActionModel(curX, curY, endx, endy, 0, (int) (endtime - starttime), starttime);
+                    ActionModel actionModel = new ActionModel(curX, curY, endx, endy, 0, duration, starttime);
                     curX = 0; curY = 0; endx = 0; endy = 0;
                     return actionModel;
                 }

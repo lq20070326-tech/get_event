@@ -75,12 +75,12 @@ public class AutoClickService extends AccessibilityService {
         // 0: 收到指令立刻执行，不延迟
         // duration: 手指在屏幕上滑动的物理持续时间（划拉得快还是慢，全靠它控制）
         builder.addStroke(new GestureDescription.StrokeDescription(swipePath, delay, duration));
-        Log.d("clickposition:","点击半成endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY);
+        Log.d("clickposition:","滑动半成endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY);
         GestureDescription gesture = builder.build();
 
         // 3. 甩出滑动指令
         mInstance.dispatchGesture(gesture, null, null);
-        Log.d("clickposition:","点击成功endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY);
+        Log.d("clickposition:","滑动成功endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY);
     }
 
     @Override

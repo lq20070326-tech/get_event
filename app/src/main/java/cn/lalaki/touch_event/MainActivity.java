@@ -116,7 +116,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                 StringBuilder sb = new StringBuilder();
                 while (isRunning) {
                     String line = br.readLine();
-                    //处理xy信息
+                    //处理xy信息//TODO delay=0 question
                     ActionModel action = parser.handleCh(line);
                     if (action != null && State.recordstate) {
                         actionmodels.add(action);
@@ -129,7 +129,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                             int delay =(int) (actionmodels.get(i+1).recordtime-actionmodels.get(i).recordtime);
                             actionmodels.set(i+1,new ActionModel(actionmodels.get(i+1), delay));
                             ActionQueue.getInstance().queue.offer(actionmodels.get(i+1));
-                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type);
+                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type+" "+actionmodels.get(i+1).delay);
                             i++;
                         }
                         if(State.clearstate){

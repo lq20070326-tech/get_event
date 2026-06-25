@@ -85,27 +85,31 @@ public class FloatingWindowManager {
         btnexec.setText("执行");
         btnexec.setTextSize(12);
         btnexec.setOnClickListener(view -> {
-            for (int i = 0; i < ActionQueue.getInstance().queue.size(); i++) {
+            for (int i = 0; i < ActionQueue.getInstance().queue.size()-1; i++) {
                 actionModels.add(ActionQueue.getInstance().queue.poll());
             }
+            ActionQueue.getInstance().queue.clear();
             State.recoverstate = true;
             btnstate.setText("状态栏：执行中");
             new Thread(() -> {
                 Log.d("xianc","线程已启动");
-                    while (State.recoverstate) {
+                    while (State.recoverstate && !actionModels.isEmpty()) {
                         try {
                             // 消费者：如果没有动作，它会在这里自动阻塞等待，不占 CPU
                             Log.d("try","try已启动");
                             ActionModel action = actionModels.get(index);
                             if (action.type == 1) {
                                 AutoClickService.click(action.startX, action.startY, action.delay, action.duration);
-                                Log.d("clickposition", "x:" + action.startX + "y:" + action.startY + "type:" + action.type);
+                                Log.d("clickposition", "x:" + action.startX + "y:" + action.startY + "type:" + action.type + "delay:" + action.delay);
                             } else {
                                 AutoClickService.swipe(action.startX, action.startY, action.endX, action.endY, action.delay, action.duration);
-                                Log.d("swipeposition", "x:" + action.endX + "y:" + action.endY + "type:" + action.type);
+                                Log.d("swipeposition", "x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay);
                             }
-                            if(index == actionModels.size()) index = 0;
                             index++;
+                            if(index == actionModels.size()) {
+                                index = 0;
+                                break;
+                            }
                         } catch(NullPointerException e){
                             State.recoverstate = false;
                         }
