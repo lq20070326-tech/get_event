@@ -42,7 +42,7 @@ public class EventParser {
         } else if (line.contains("0001 014a 00000000")) { // 松开事件
             endtime = System.currentTimeMillis();
             int duration = (int) (endtime - starttime);
-            if (duration < 50 || duration > 150) duration = 75;
+//            if (duration < 50 || duration > 100) duration = 75;
             if (isTouching) {
                 isTouching = false;
                 // 触发了一个点击动作！

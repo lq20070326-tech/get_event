@@ -120,8 +120,8 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                     ActionModel action = parser.handleCh(line);
                     if (action != null && State.recordstate) {
                         actionmodels.add(action);
-                        Log.d("produceposition", "x:"+action.startX+" y:"+action.startY+"type:"+action.type);
-                        if(i == 0) {
+                        Log.d("produceposition", "x:"+action.startX+" y:"+action.startY+"type:"+action.type+"duration:"+action.duration);
+                        if(i == 0 && actionmodels.isEmpty()) {
                             actionmodels.set(0 ,new ActionModel(actionmodels.get(0), 0));
                             ActionQueue.getInstance().queue.offer(actionmodels.get(0));
                         }
@@ -129,12 +129,13 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                             int delay =(int) (actionmodels.get(i+1).recordtime-actionmodels.get(i).recordtime);
                             actionmodels.set(i+1,new ActionModel(actionmodels.get(i+1), delay));
                             ActionQueue.getInstance().queue.offer(actionmodels.get(i+1));
-                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type+" "+actionmodels.get(i+1).delay);
+                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type+" "+actionmodels.get(i+1).delay+"duration:"+action.duration);
                             i++;
                         }
                         if(State.clearstate){
                             actionmodels.clear();
                             ActionQueue.getInstance().queue.clear();
+                            AutoClickService.clear();
                             State.recoverstate = false; State.recordstate = false; State.clearstate = false;
                             i = 0;
                         }

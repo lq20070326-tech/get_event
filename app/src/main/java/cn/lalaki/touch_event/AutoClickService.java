@@ -6,7 +6,13 @@ import android.graphics.Path;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
+import java.util.ArrayList;
+
 public class AutoClickService extends AccessibilityService {
+    static int index = 0;
+
+    static int size = 0;;
+    static ArrayList<ActionModel> actionModels = new ArrayList<>();
 
     // 静态变量，用来保存当前服务的全局单例
     public static AutoClickService mInstance;
@@ -23,64 +29,78 @@ public class AutoClickService extends AccessibilityService {
     }
 
     /**
-     * 核心静态方法：对外开放的“开火接口”，传入 X 和 Y 坐标就能点一下屏幕
+     * 👑 核心驱动器：一个手势彻底完事了，才准跑下一个
      */
-    public static void click(int x, int y, int delay, int duration) {
-        // 如果服务没开启，mInstance 为空，直接拦截，防止空指针崩溃
+    public static void startSafePlayback() {
         if (mInstance == null) {
-            Log.d("nowuzhang:","无障碍服务未开启");
+            Log.e("Playback", "无障碍服务未开启，无法回放");
             return;
         }
+        if (size == 0){
+            size = ActionQueue.getInstance().queue.size();
+        }
 
-        // 1. 创建一条点击路径。Path 在安卓里是画笔轨迹，我们要点击一个点，就把轨迹移到(x,y)
-        Path path = new Path();
-        path.moveTo(x, y);
+        //导出队列入列表
+        if (actionModels.isEmpty()) {
+            for (int i = 0; i < size - 1; i++) {
+                actionModels.add(ActionQueue.getInstance().queue.poll());
+                Log.d("gesturepotion","手势导入列表成功，参数为：x:" + actionModels.get(i).endX + "y:" + actionModels.get(i).endY + "type:" + actionModels.get(i).type + "delay:" + actionModels.get(i).delay+"duration:"+actionModels.get(i).duration);
+            }
+        }
 
-        // 2. 构建手势描述器
-        GestureDescription.Builder builder = new GestureDescription.Builder();
-
-        // StrokeDescription 参数含义：
-        // path: 点击的轨迹
-        // 0: 收到指令后延迟 0 毫秒立刻执行
-        // 50: 手指在屏幕上按压持续 50 毫秒（模拟正常人类戳屏幕的动作）
-        builder.addStroke(new GestureDescription.StrokeDescription(path, delay, duration));
-        Log.d("clickposition:","点击半成x:"+x+",y:"+y);
-        GestureDescription gesture = builder.build();
-
-        // 3. 让无障碍大管家把这个手势甩给屏幕，强行触发物理点击
-        mInstance.dispatchGesture(gesture, null, null);
-        Log.d("clickposition:","点击成功x:"+x+",y:"+y);
+        // 吹响开工号角，开始消费第一个
+        executeNextAction();
     }
 
-    /**
-     * 核心静态方法：让外部随时可以调用来模拟一次屏幕滑动
-     * @param startX 起点 X
-     * @param startY 起点 Y
-     * @param endX   终点 X
-     * @param endY   终点 Y
-     * @param duration 滑动耗时（毫秒，比如滑动过程持续 300ms）
-     */
-    public static void swipe(int startX, int startY, int endX, int endY, int delay, int duration) {
-        if (mInstance == null) return;
+    private static void executeNextAction() {
+        if (index == actionModels.size()) {
+//            Log.d("Playback", "🏁 所有排队的手势已全部安全执行完毕！");
+            index = 0;
+            return;
+        }
+        // 1. 从你的线程安全阻塞队列里，弹出队头的一个动作
+        final ActionModel action = actionModels.get(index);
+        index++;
 
-        // 1. 构建滑动轨迹：从起点 moveTo 连线 lineTo 到终点
-        Path swipePath = new Path();
-        swipePath.moveTo(startX, startY);
-        swipePath.lineTo(endX, endY);
+        // 3. 构建当前动作的物理路径
+        Path path = new Path();
+        path.moveTo(action.startX, action.startY);
+        if (action.type == 2) { // 如果是滑动，连线到终点
+            path.lineTo(action.endX, action.endY);
+        }
 
         GestureDescription.Builder builder = new GestureDescription.Builder();
+//        int safeDuration = action.duration > 0 ? action.duration : 50;
 
-        // 2. 关键参数设置：
-        // swipePath: 滑动轨迹
-        // 0: 收到指令立刻执行，不延迟
-        // duration: 手指在屏幕上滑动的物理持续时间（划拉得快还是慢，全靠它控制）
-        builder.addStroke(new GestureDescription.StrokeDescription(swipePath, delay, duration));
-        Log.d("clickposition:","滑动半成endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY+",delay:"+delay);
-        GestureDescription gesture = builder.build(); //TODO duration 又爆超出哦最大值
+        builder.addStroke(new GestureDescription.StrokeDescription(path, action.delay, action.duration));
+        GestureDescription gesture = builder.build();
 
-        // 3. 甩出滑动指令
-        mInstance.dispatchGesture(gesture, null, null);
-        Log.d("clickposition:","滑动成功endx:"+endX+"andendy:"+endY+",x:"+startX+",y:"+startY+",delay:"+delay);
+        // 4. 【核心灵魂】：利用系统的带有 ResultCallback 的接口开火
+        Log.d("gesturepotion","准备开火，参数为：x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay+"duration:"+action.duration);
+        mInstance.dispatchGesture(gesture, new AccessibilityService.GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+                Log.d("swipeposition", "开火成功，x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay+"duration:"+action.duration);
+
+                // 👑 【链式递归】：当前手势彻底安全结束了，立刻去取下一个手势执行！
+                executeNextAction();
+            }
+
+            @Override
+            public void onCancelled(GestureDescription gestureDescription) {
+                super.onCancelled(gestureDescription);
+                Log.e("Playback", "❌ 系统通知：当前手势被异常拦截/取消了！");
+
+                // 防死锁保底：就算被系统取消了（比如点到了不可点击区域），也得继续往下走，不能卡死在原地
+                executeNextAction();
+            }
+        }, null);
+    }
+
+    public static void clear(){
+        actionModels.clear();
+        size = 0;
     }
 
     @Override
