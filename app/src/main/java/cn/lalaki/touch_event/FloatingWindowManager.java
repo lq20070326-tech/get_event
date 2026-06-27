@@ -10,9 +10,14 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import java.util.ArrayList;
+
 public class FloatingWindowManager {
     private static WindowManager mWindowManager;
     private static View mFloatView;
+    private static ArrayList<ActionModel> actionModels = new ArrayList<>();
+    static int index = 0;
+    static int size = 0;
 
     public static void showFloatWindow(Context context){
         if (mFloatView != null) return;
@@ -50,58 +55,73 @@ public class FloatingWindowManager {
         // 给按钮之间加点上下间距，防止粘在一起不好点
         rowParams.setMargins(0, 5, 0, 5);
 
-        //6.状态按钮
-        final Button btnstate = new Button(context);
-        btnstate.setText("状态栏：    ");
-        btnstate.setTextSize(12);
-
         //1.录制按钮
         final Button btnRecord = new Button(context);
         btnRecord.setText("开始录制");
         btnRecord.setTextSize(12);
         btnRecord.setOnClickListener(view -> {
-            State.clearstate = false;
-            State.recordstate = true;
-            btnRecord.setText("⏳正在录制");
-            btnstate.setText("状态栏：录制中");
+            if(!State.recordstate) {
+                State.clearstate = false;
+                State.recordstate = true;
+                btnRecord.setText("⏳结束录制");
+            }else{
+                State.recordstate = false;
+                size = ActionQueue.getInstance().queue.size();
+                if (size == 1) return ;
+                for (int i = 0; i < size-1; i++) {
+                    actionModels.add(ActionQueue.getInstance().queue.poll());
+                    Log.d("initializating","正在进行初始化，size："+ActionQueue.getInstance().queue.size());
+                }
+                ActionQueue.getInstance().queue.clear();
+                Log.d("initialised","初始化成功，当前手势数量："+actionModels.size());
+                btnRecord.setText("开始录制");
+            }
         });
-        //2.停止按钮
-        final Button btnstop = new Button(context);
-        btnstop.setText("停止");
-        btnstop.setTextSize(12);
-        btnstop.setOnClickListener(view -> {
-            btnstop.setText("已停止");
-            State.recordstate = false;
-            State.recoverstate = false;
-            btnRecord.setText("开始录制");
-        });
+//        //2.停止按钮
+//        final Button btnstop = new Button(context);
+//        btnstop.setText("停止");
+//        btnstop.setTextSize(12);
+//        btnstop.setOnClickListener(view -> {
+//            btnstop.setText("已停止");
+//            index = 0;
+//            State.recoverstate = false;
+//            btnRecord.setText("开始录制");
+//        });
         //3.回溯按钮
         final Button btnexec = new Button(context);
         btnexec.setText("执行");
         btnexec.setTextSize(12);
         btnexec.setOnClickListener(view -> {
-            ActionQueue.getInstance().queue.clear();
-            State.recoverstate = true;
-            btnstate.setText("状态栏：执行中");
-            new Thread(() -> {
-                Log.d("xianc","线程已启动");
-                    while (State.recoverstate) {
+            if(!State.recoverstate){
+                btnexec.setText("停止执行");
+                State.recoverstate = true;
+                AutoClickService.index = 0;
+                new Thread(() -> {
+                    Log.d("xianc","线程已启动");
+                    while (State.recoverstate && index == AutoClickService.index) {
                         try {
-                            AutoClickService.startSafePlayback();
-                        } catch(NullPointerException e){
-                            Log.d("errorposition","开始执行失败");
+                            AutoClickService.startSafePlayback(actionModels);
+                            index++;
+                            Log.d("xxxxxxxxxxx"," 状态： "+State.recoverstate);
+                        } catch (NullPointerException e){
                             State.recoverstate = false;
                         }
                     }
-            }).start();
+                }).start();
+            }else{
+                State.recoverstate = false;
+                btnexec.setText("执行");
+                index = 0;
+                AutoClickService.index = 0;
+            }
         });
         //4.清除按钮
         final Button btnclear = new Button(context);
         btnclear.setText("清除");
         btnclear.setTextSize(12);
         btnclear.setOnClickListener(view -> {
+            index = 0;
             State.clearstate = true;
-            btnstate.setText("状态栏：已清除");
         });
         //5.关闭按钮
         final Button btnClose = new Button(context);
@@ -115,9 +135,8 @@ public class FloatingWindowManager {
         });
 
         layout.addView(btnClose, rowParams);
-        layout.addView(btnstate, rowParams);
         layout.addView(btnRecord, rowParams);
-        layout.addView(btnstop, rowParams);
+//        layout.addView(btnstop, rowParams);
         layout.addView(btnexec, rowParams);
         layout.addView(btnclear, rowParams);
 

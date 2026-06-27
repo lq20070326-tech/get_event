@@ -116,29 +116,31 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                 StringBuilder sb = new StringBuilder();
                 while (isRunning) {
                     String line = br.readLine();
-                    //处理xy信息//TODO delay=0 question
+                    //处理xy信息
                     ActionModel action = parser.handleCh(line);
                     if (action != null && State.recordstate) {
                         actionmodels.add(action);
-                        Log.d("produceposition", "x:"+action.startX+" y:"+action.startY+"type:"+action.type+"duration:"+action.duration);
-                        if(i == 0 && actionmodels.isEmpty()) {
+                        Log.d("produceposition", "x:"+actionmodels.get(i).startX+" y:"+actionmodels.get(i).startY+"type:"+actionmodels.get(i).type+"duration:"+actionmodels.get(i).duration);
+                        if(i == 0) {
                             actionmodels.set(0 ,new ActionModel(actionmodels.get(0), 0));
                             ActionQueue.getInstance().queue.offer(actionmodels.get(0));
-                        }
-                        if(i < actionmodels.size()-1){
-                            int delay =(int) (actionmodels.get(i+1).recordtime-actionmodels.get(i).recordtime);
-                            actionmodels.set(i+1,new ActionModel(actionmodels.get(i+1), delay));
-                            ActionQueue.getInstance().queue.offer(actionmodels.get(i+1));
-                            Log.d("exameposition"," "+actionmodels.get(i+1).startX+" "+actionmodels.get(i+1).startY+" "+actionmodels.get(i+1).type+" "+actionmodels.get(i+1).delay+"duration:"+action.duration);
+                            Log.d("exameposition"," "+actionmodels.get(i).startX+" "+actionmodels.get(i).startY+" "+actionmodels.get(i).type+" "+actionmodels.get(i).delay+"duration:"+action.duration);
                             i++;
                         }
-                        if(State.clearstate){
-                            actionmodels.clear();
-                            ActionQueue.getInstance().queue.clear();
-                            AutoClickService.clear();
-                            State.recoverstate = false; State.recordstate = false; State.clearstate = false;
-                            i = 0;
+                        if(i < actionmodels.size() && i != 0){
+                            int delay =(int) (actionmodels.get(i).recordtime-actionmodels.get(i-1).recordtime);
+                            actionmodels.set(i,new ActionModel(actionmodels.get(i), delay));
+                            ActionQueue.getInstance().queue.offer(actionmodels.get(i));
+                            Log.d("exameposition"," "+actionmodels.get(i).startX+" "+actionmodels.get(i).startY+" "+actionmodels.get(i).type+" "+actionmodels.get(i).delay+"duration:"+action.duration);
+                            i++;
                         }
+                    }
+                    if(State.clearstate){
+                        actionmodels.clear();
+                        ActionQueue.getInstance().queue.clear();
+                        AutoClickService.clear();
+                        State.recoverstate = false; State.recordstate = false; State.clearstate = false;
+                        i = 0;
                     }
                     sb.append(line).append('\n');
                     while (isRunning && sb.length() > 4096) {

@@ -7,7 +7,7 @@ public class EventParser {
     // 暂存当前的坐标状态
     private int curX = 0, curY = 0;
     private int endx = 0 , endy = 0;
-    //TODO 实际位置偏差大，需要修bug
+    //TODO 实际位置偏差大，需要修bug 会隐形点到开始录制
     private final float maxx = 143999;
     private final float maxy = 319999;
     private final int resolusionx = 1440;

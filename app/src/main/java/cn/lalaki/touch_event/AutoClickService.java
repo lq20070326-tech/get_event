@@ -10,8 +10,6 @@ import java.util.ArrayList;
 
 public class AutoClickService extends AccessibilityService {
     static int index = 0;
-
-    static int size = 0;;
     static ArrayList<ActionModel> actionModels = new ArrayList<>();
 
     // 静态变量，用来保存当前服务的全局单例
@@ -31,22 +29,18 @@ public class AutoClickService extends AccessibilityService {
     /**
      * 👑 核心驱动器：一个手势彻底完事了，才准跑下一个
      */
-    public static void startSafePlayback() {
+    public static void startSafePlayback(ArrayList<ActionModel> actionmodels) {
+        Log.d("error","弹夹: "+actionmodels.size());
         if (mInstance == null) {
             Log.e("Playback", "无障碍服务未开启，无法回放");
             return;
         }
-        if (size == 0){
-            size = ActionQueue.getInstance().queue.size();
+        if (actionmodels.isEmpty()) {
+            Log.d("error","弹夹为空检测: "+actionmodels.size());
+            State.recoverstate = false;
+            return;
         }
-
-        //导出队列入列表
-        if (actionModels.isEmpty()) {
-            for (int i = 0; i < size - 1; i++) {
-                actionModels.add(ActionQueue.getInstance().queue.poll());
-                Log.d("gesturepotion","手势导入列表成功，参数为：x:" + actionModels.get(i).endX + "y:" + actionModels.get(i).endY + "type:" + actionModels.get(i).type + "delay:" + actionModels.get(i).delay+"duration:"+actionModels.get(i).duration);
-            }
-        }
+        actionModels = actionmodels;
 
         // 吹响开工号角，开始消费第一个
         executeNextAction();
@@ -54,13 +48,12 @@ public class AutoClickService extends AccessibilityService {
 
     private static void executeNextAction() {
         if (index == actionModels.size()) {
-//            Log.d("Playback", "🏁 所有排队的手势已全部安全执行完毕！");
+            Log.d("Playback", "🏁 所有排队的手势已全部安全执行完毕！");
             index = 0;
             return;
         }
         // 1. 从你的线程安全阻塞队列里，弹出队头的一个动作
         final ActionModel action = actionModels.get(index);
-        index++;
 
         // 3. 构建当前动作的物理路径
         Path path = new Path();
@@ -72,7 +65,7 @@ public class AutoClickService extends AccessibilityService {
         GestureDescription.Builder builder = new GestureDescription.Builder();
 //        int safeDuration = action.duration > 0 ? action.duration : 50;
 
-        builder.addStroke(new GestureDescription.StrokeDescription(path, action.delay, action.duration));
+        builder.addStroke(new GestureDescription.StrokeDescription(path, 0, action.duration));
         GestureDescription gesture = builder.build();
 
         // 4. 【核心灵魂】：利用系统的带有 ResultCallback 的接口开火
@@ -81,10 +74,11 @@ public class AutoClickService extends AccessibilityService {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {
                 super.onCompleted(gestureDescription);
-                Log.d("swipeposition", "开火成功，x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay+"duration:"+action.duration);
 
                 // 👑 【链式递归】：当前手势彻底安全结束了，立刻去取下一个手势执行！
-                executeNextAction();
+                index++;
+                executeNextAction(); // TODO 执行不到第二步，却有日志 question
+                Log.d("gesturepotion","开火成功，参数为：x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay+"duration:"+action.duration);
             }
 
             @Override
@@ -99,8 +93,8 @@ public class AutoClickService extends AccessibilityService {
     }
 
     public static void clear(){
+        index = 0;
         actionModels.clear();
-        size = 0;
     }
 
     @Override
