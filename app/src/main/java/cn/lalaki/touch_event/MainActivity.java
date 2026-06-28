@@ -122,7 +122,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                         actionmodels.add(action);
                         Log.d("produceposition", "x:"+actionmodels.get(i).startX+" y:"+actionmodels.get(i).startY+"type:"+actionmodels.get(i).type+"duration:"+actionmodels.get(i).duration);
                         if(i == 0) {
-                            actionmodels.set(0 ,new ActionModel(actionmodels.get(0), 0));
+                            actionmodels.set(0 ,new ActionModel(actionmodels.get(0), 450));
                             ActionQueue.getInstance().queue.offer(actionmodels.get(0));
                             Log.d("exameposition"," "+actionmodels.get(i).startX+" "+actionmodels.get(i).startY+" "+actionmodels.get(i).type+" "+actionmodels.get(i).delay+"duration:"+action.duration);
                             i++;

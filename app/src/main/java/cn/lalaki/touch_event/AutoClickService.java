@@ -47,9 +47,14 @@ public class AutoClickService extends AccessibilityService {
     }
 
     private static void executeNextAction() {
+        Log.d("autostate"," index: "+index+" size: "+actionModels.size());
         if (index == actionModels.size()) {
             Log.d("Playback", "🏁 所有排队的手势已全部安全执行完毕！");
+            FloatingWindowManager.loop--;
             index = 0;
+            if(FloatingWindowManager.loop != 0) FloatingWindowManager.index = 0;
+            Log.d("Autoxxxxxxxxxxx"," 状态： "+State.recoverstate+" loop: "+FloatingWindowManager.loop+" floatindex: "+FloatingWindowManager.index);
+            State.executed = true;
             return;
         }
         // 1. 从你的线程安全阻塞队列里，弹出队头的一个动作
@@ -65,7 +70,7 @@ public class AutoClickService extends AccessibilityService {
         GestureDescription.Builder builder = new GestureDescription.Builder();
 //        int safeDuration = action.duration > 0 ? action.duration : 50;
 
-        builder.addStroke(new GestureDescription.StrokeDescription(path, 0, action.duration));
+        builder.addStroke(new GestureDescription.StrokeDescription(path, action.delay, action.duration));
         GestureDescription gesture = builder.build();
 
         // 4. 【核心灵魂】：利用系统的带有 ResultCallback 的接口开火
@@ -77,7 +82,7 @@ public class AutoClickService extends AccessibilityService {
 
                 // 👑 【链式递归】：当前手势彻底安全结束了，立刻去取下一个手势执行！
                 index++;
-                executeNextAction(); // TODO 执行不到第二步，却有日志 question
+                executeNextAction();
                 Log.d("gesturepotion","开火成功，参数为：x:" + action.endX + "y:" + action.endY + "type:" + action.type + "delay:" + action.delay+"duration:"+action.duration);
             }
 

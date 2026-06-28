@@ -1,5 +1,6 @@
 package cn.lalaki.touch_event;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.os.Build;
@@ -8,6 +9,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ public class FloatingWindowManager {
     private static ArrayList<ActionModel> actionModels = new ArrayList<>();
     static int index = 0;
     static int size = 0;
+    static int loop = 5;
 
     public static void showFloatWindow(Context context){
         if (mFloatView != null) return;
@@ -98,13 +101,15 @@ public class FloatingWindowManager {
                 AutoClickService.index = 0;
                 new Thread(() -> {
                     Log.d("xianc","线程已启动");
-                    while (State.recoverstate && index == AutoClickService.index) {
-                        try {
-                            AutoClickService.startSafePlayback(actionModels);
-                            index++;
-                            Log.d("xxxxxxxxxxx"," 状态： "+State.recoverstate);
-                        } catch (NullPointerException e){
-                            State.recoverstate = false;
+                    while(State.recoverstate && loop > 0){
+                        while (State.executed) {
+                            try {
+                                AutoClickService.startSafePlayback(actionModels);
+                                State.executed = false;
+                                Log.d("floaxxxxxxxxxxx"," 状态： "+State.recoverstate+" loop: "+FloatingWindowManager.loop+" floatindex: "+FloatingWindowManager.index);
+                            } catch (NullPointerException e){
+                                State.recoverstate = false;
+                            }
                         }
                     }
                 }).start();
@@ -112,8 +117,31 @@ public class FloatingWindowManager {
                 State.recoverstate = false;
                 btnexec.setText("执行");
                 index = 0;
+                loop = 5;
                 AutoClickService.index = 0;
             }
+        });
+        //3.5循环按钮
+        final Button btnloop = new Button(context);
+        btnloop.setText("循环");
+        btnloop.setTextSize(12);
+        btnloop.setOnClickListener(view -> {
+            Context ctx = view.getContext();
+            AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+            EditText etNum = new EditText(ctx);
+            etNum.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            builder.setView(etNum);
+            builder.setTitle("设置循环次数");
+            builder.setPositiveButton("确认", (dialog, which) -> {
+                String numStr = etNum.getText().toString();
+                if (!numStr.isEmpty()) {
+                    loop = Integer.parseInt(numStr);
+                }
+            });
+            AlertDialog dialog = builder.create();
+            // 悬浮窗弹窗必须叠加悬浮层级
+            dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+            dialog.show();
         });
         //4.清除按钮
         final Button btnclear = new Button(context);
@@ -136,7 +164,7 @@ public class FloatingWindowManager {
 
         layout.addView(btnClose, rowParams);
         layout.addView(btnRecord, rowParams);
-//        layout.addView(btnstop, rowParams);
+        layout.addView(btnloop, rowParams);
         layout.addView(btnexec, rowParams);
         layout.addView(btnclear, rowParams);
 
